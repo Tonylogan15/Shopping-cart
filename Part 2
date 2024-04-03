@@ -1,0 +1,253 @@
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+// Struct to represent customer account details
+struct Customer {
+    string username;
+    string password;
+    int accountNumber;
+    string memberLevel;
+    double storeCredit;
+    string address;
+};
+
+// Struct to represent product information
+struct Product {
+    string SKU;
+    string name;
+    int itemsInUnit;
+    double pricePerUnit;
+    int quantityOnHand;
+};
+
+// Function prototypes
+void authenticateUser(Customer& customer);
+void purchaseItem(Customer& customer, vector<Product>& products);
+void viewAllItems(const vector<Product>& products);
+void getEstimate(const vector<Product>& products);
+void updateAccount(Customer& customer);
+void logout();
+
+int main() {
+    // Initialize customer account
+    Customer customer = {"jsmith", "blue123", 123456789, "Gold", 3000.00, "100 W New Haven Ave, Melbourne, FL 32901"};
+
+    // Initialize product information
+    vector<Product> products = {
+        {"HF-342", "½ in Bolt", 50, 20.00, 200},
+        {"LK-322", "¼ in Nail", 25, 5.75, 76},
+        {"KF-231", "Hammer", 1, 15.23, 100}
+    };
+
+    // Authenticate the user
+    authenticateUser(customer);
+
+    // Main program loop
+    int userChoice;
+    while (true) {
+        // Display menu options
+        cout << "\nMenu Options:\n";
+        cout << "1 - Purchase an item\n";
+        cout << "2 - View all items\n";
+        cout << "3 - Get an estimate\n";
+        cout << "4 - Update Account\n";
+        cout << "5 - Log Out\n";
+        cout << "Enter your choice: ";
+        cin >> userChoice;
+
+        // Based on user's choice, call the corresponding function
+        switch (userChoice) {
+            case 1:
+                purchaseItem(customer, products);
+                break;
+            case 2:
+                viewAllItems(products);
+                break;
+            case 3:
+                getEstimate(products);
+                break;
+            case 4:
+                updateAccount(customer);
+                break;
+            case 5:
+                logout();
+                return 0;
+            default:
+                cout << "Invalid choice. Please try again." << endl;
+        }
+    }
+
+    return 0;
+}
+
+// Function to authenticate user credentials
+void authenticateUser(Customer& customer) {
+    string username, password;
+    cout << "Enter your username: ";
+    cin >> username;
+    cout << "Enter your password: ";
+    cin >> password;
+
+    // Check if username and password match customer's credentials
+    if (username == customer.username && password == customer.password) {
+        cout << "Authentication successful. Welcome, " << customer.username << "!\n";
+    } else {
+        cout << "Incorrect username or password. Exiting program.\n";
+        exit(1);
+    }
+}
+
+// Function to allow the user to purchase an item
+void purchaseItem(Customer& customer, vector<Product>& products) {
+    // Display available items
+    viewAllItems(products);
+
+    // Prompt user to select an item to purchase
+    string SKU;
+    cout << "Enter the SKU of the item you want to purchase: ";
+    cin >> SKU;
+
+    // Find the selected product in the products vector
+    Product* selectedProduct = nullptr;
+    for (auto& product : products) {
+        if (product.SKU == SKU) {
+            selectedProduct = &product;
+            break;
+        }
+    }
+
+    // Check if product exists
+    if (selectedProduct == nullptr) {
+        cout << "Invalid SKU. Please try again." << endl;
+        return;
+    }
+
+    // Prompt user for quantity to purchase
+    int quantity;
+    cout << "Enter the quantity you want to purchase: ";
+    cin >> quantity;
+
+    // Check if quantity is available
+    if (quantity > selectedProduct->quantityOnHand) {
+        cout << "Insufficient quantity available." << endl;
+        return;
+    }
+
+    // Calculate total cost
+    double subtotal = selectedProduct->pricePerUnit * quantity;
+    double salesTax = subtotal * 0.06;
+    double totalCost = subtotal + salesTax;
+
+    // Check if customer has enough store credit
+    if (totalCost > customer.storeCredit) {
+        cout << "Insufficient store credit." << endl;
+        return;
+    }
+
+    // Update quantity on hand
+    selectedProduct->quantityOnHand -= quantity;
+
+    // Update customer's store credit
+    customer.storeCredit -= totalCost;
+
+    // Display receipt
+    cout << "\nPurchase Receipt:\n";
+    cout << "Item: " << selectedProduct->name << endl;
+    cout << "Quantity: " << quantity << endl;
+    cout << "Price per unit: $" << selectedProduct->pricePerUnit << endl;
+    cout << "Subtotal: $" << fixed << setprecision(2) << subtotal << endl;
+    cout << "Sales Tax (6%): $" << salesTax << endl;
+    cout << "Total Cost: $" << totalCost << endl;
+    cout << "Updated store credit: $" << customer.storeCredit << endl;
+}
+
+// Function to view all available items
+void viewAllItems(const vector<Product>& products) {
+    cout << "\nAvailable Items:\n";
+    cout << setw(10) << "SKU" << setw(15) << "Name" << setw(15) << "Price Per Unit" << setw(20) << "Quantity On Hand\n";
+    for (const auto& product : products) {
+        cout << setw(10) << product.SKU << setw(15) << product.name << setw(15) << product.pricePerUnit << setw(20) << product.quantityOnHand << endl;
+    }
+}
+
+// Function to get an estimate of the cost for purchasing an item
+void getEstimate(const vector<Product>& products) {
+    // Display available items
+    viewAllItems(products);
+
+    // Prompt user to select an item for estimation
+    string SKU;
+    cout << "Enter the SKU of the item you want to estimate: ";
+    cin >> SKU;
+
+    // Find the selected product in the products vector
+    const Product* selectedProduct = nullptr;
+    for (const auto& product : products) {
+        if (product.SKU == SKU) {
+            selectedProduct = &product;
+            break;
+        }
+    }
+
+    // Check if product exists
+    if (selectedProduct == nullptr) {
+        cout << "Invalid SKU. Please try again." << endl;
+        return;
+    }
+
+    // Prompt user for quantity for estimation
+    int quantity;
+    cout << "Enter the quantity for estimation: ";
+    cin >> quantity;
+
+    // Calculate total cost for estimation
+    double subtotal = selectedProduct->pricePerUnit * quantity;
+    double salesTax = subtotal * 0.06;
+    double totalCost = subtotal + salesTax;
+
+    // Display estimation
+    cout << "\nEstimation:\n";
+    cout << "Item: " << selectedProduct->name << endl;
+    cout << "Quantity: " << quantity << endl;
+    cout << "Price per unit: $" << selectedProduct->pricePerUnit << endl;
+    cout << "Subtotal: $" << fixed << setprecision(2) << subtotal << endl;
+    cout << "Sales Tax (6%): $" << salesTax << endl;
+    cout << "Total Cost: $" << totalCost << endl;
+}
+
+// Function to update customer account information
+void updateAccount(Customer& customer) {
+    cout << "\nUpdate Account Information:\n";
+    cout << "1. Update Password\n";
+    cout << "2. Update Address\n";
+    cout << "Enter your choice: ";
+
+    int choice;
+    cin >> choice;
+
+    switch (choice) {
+        case 1:
+            cout << "Enter new password: ";
+            cin >> customer.password;
+            cout << "Password updated successfully." << endl;
+            break;
+        case 2:
+            cout << "Enter new address: ";
+            cin.ignore(); // Ignore newline character
+            getline(cin, customer.address);
+            cout << "Address updated successfully." << endl;
+            break;
+        default:
+            cout << "Invalid choice. Please try again." << endl;
+            break;
+    }
+}
+
+// Function to logout
+void logout() {
+    cout << "Logging out. Goodbye!" << endl;
+}
